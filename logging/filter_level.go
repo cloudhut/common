@@ -1,5 +1,7 @@
 package logging
 
+import "go.uber.org/zap/zapcore"
+
 // FilterLevel wraps an existing zap.Core but logs at a different level.
 // This function can be used to create child loggers which should print
 // only log levels at a different log level than the parent logger.
