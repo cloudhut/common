@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kafka-owl/common/pkg/common/rest"
+	"github.com/kafka-owl/common/rest"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +23,6 @@ func (rec *Recoverer) Wrap(next http.Handler) http.Handler {
 					Err:      fmt.Errorf("There was a panic! %s", err),
 					Status:   http.StatusInternalServerError,
 					Message:  "Internal Server Error",
-					Type:     rest.TypeInternalServerError,
 					IsSilent: false,
 				}
 				rest.SendRESTError(w, r, rec.Logger, restErr)
