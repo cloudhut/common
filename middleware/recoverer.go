@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kafka-owl/common/rest"
+	"github.com/cloudhut/common/rest"
 	"go.uber.org/zap"
 )
 

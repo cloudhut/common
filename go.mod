@@ -1,4 +1,4 @@
-module github.com/kafka-owl/common
+module github.com/cloudhut/common
 
 go 1.13
 
