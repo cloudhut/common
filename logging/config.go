@@ -10,7 +10,7 @@ import (
 
 // Config for a zap logger
 type Config struct {
-	LogLevelInput string
+	LogLevelInput string `yaml:"level"`
 	LogLevel      zap.AtomicLevel
 }
 
