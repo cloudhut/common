@@ -38,5 +38,15 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 	f.DurationVar(&c.HTTPServerWriteTimeout, "server.http.write-timeout", 30*time.Second, "Write timeout for HTTP server")
 	f.DurationVar(&c.HTTPServerIdleTimeout, "server.http.idle-timeout", 120*time.Second, "Idle timeout for HTTP server")
 	f.IntVar(&c.CompressionLevel, "server.compression-level", 4, "Compression level applied to all http responses. Valid values are: 0-9 (0=completely disable compression middleware, 1=weakest compression, 9=best compression)")
+}
 
+func (c *Config) SetDefaults() {
+	c.ServerGracefulShutdownTimeout = 30 * time.Second
+
+	c.HTTPListenPort = 8080
+	c.HTTPServerIdleTimeout = 30 * time.Second
+	c.HTTPServerReadTimeout = 30 * time.Second
+	c.HTTPServerWriteTimeout = 30 * time.Second
+
+	c.CompressionLevel = 4
 }

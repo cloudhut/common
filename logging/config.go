@@ -48,3 +48,8 @@ func (cfg *Config) Set(logLevel string) error {
 
 	return nil
 }
+
+func (c *Config) SetDefaults() {
+	c.LogLevelInput = "info"
+	c.LogLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
+}
