@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/cloudhut/common/rest"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"net/http"
 )
 
 // Recoverer middleware logs unhandled panics and tries to continue running the API
@@ -20,10 +20,13 @@ func (rec *Recoverer) Wrap(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
 				restErr := &rest.Error{
-					Err:      fmt.Errorf("There was a panic! %s", err),
+					Err:      fmt.Errorf("there was a panic: %s", err),
 					Status:   http.StatusInternalServerError,
 					Message:  "Internal Server Error",
 					IsSilent: false,
+					InternalLogs: []zapcore.Field{
+						zap.Stack("stack"),
+					},
 				}
 				rest.SendRESTError(w, r, rec.Logger, restErr)
 			}
