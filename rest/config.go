@@ -54,6 +54,7 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 func (c *Config) SetDefaults() {
 	c.ServerGracefulShutdownTimeout = 30 * time.Second
 
+	c.HTTPListenAddress = ""
 	c.HTTPListenPort = 8080
 	c.HTTPServerIdleTimeout = 30 * time.Second
 	c.HTTPServerReadTimeout = 30 * time.Second
