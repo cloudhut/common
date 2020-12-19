@@ -65,7 +65,7 @@ func (s *Server) Start() error {
 	}()
 
 	// Serve HTTP server
-	listener, err := net.Listen("tcp", net.JoinHostPort("", strconv.Itoa(s.cfg.HTTPListenPort)))
+	listener, err := net.Listen("tcp", net.JoinHostPort(s.cfg.HTTPListenAddress, strconv.Itoa(s.cfg.HTTPListenPort)))
 	if err != nil {
 		return err
 	}

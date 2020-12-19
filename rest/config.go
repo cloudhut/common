@@ -11,6 +11,7 @@ import (
 type Config struct {
 	ServerGracefulShutdownTimeout time.Duration `yaml:"gracefulShutdownTimeout"`
 
+	HTTPListenAddress      string        `yaml:"listenAddress"`
 	HTTPListenPort         int           `yaml:"listenPort"`
 	HTTPServerReadTimeout  time.Duration `yaml:"readTimeout"`
 	HTTPServerWriteTimeout time.Duration `yaml:"writeTimeout"`
@@ -27,6 +28,7 @@ type Config struct {
 func (c *Config) RegisterFlags(f *flag.FlagSet) {
 	f.DurationVar(&c.ServerGracefulShutdownTimeout, "server.graceful-shutdown-timeout", 30*time.Second, "Timeout for graceful shutdowns")
 
+	f.StringVar(&c.HTTPListenAddress, "server.http.listen-address", "", "HTTP server listen address")
 	f.IntVar(&c.HTTPListenPort, "server.http.listen-port", 8080, "HTTP server listen port")
 	// Get "PORT" environment variable because CloudRun tells us what Port to use
 	portEnv := os.Getenv("PORT")
@@ -52,6 +54,7 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 func (c *Config) SetDefaults() {
 	c.ServerGracefulShutdownTimeout = 30 * time.Second
 
+	c.HTTPListenAddress = ""
 	c.HTTPListenPort = 8080
 	c.HTTPServerIdleTimeout = 30 * time.Second
 	c.HTTPServerReadTimeout = 30 * time.Second
