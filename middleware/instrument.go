@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -58,7 +58,9 @@ func (i *Instrument) Wrap(next http.Handler) http.Handler {
 // due to tons of different labels. Get route patterns like this:
 // a) The request matches a static route "/api/health", return that.
 // b) The request matches a dynamic route "/users/:userId/billing-history", return the
-// 	  route pattern: "users_user_id_billing_history"
+//
+//	route pattern: "users_user_id_billing_history"
+//
 // c) The requests did not match any route handlers, return "other"
 func (i *Instrument) getRoutePattern(r *http.Request) string {
 	rctx := chi.RouteContext(r.Context())
