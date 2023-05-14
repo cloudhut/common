@@ -163,6 +163,12 @@ func buildServerTLSConfig(logger *zap.Logger, cfg TLSConfig) (*tls.Config, error
 			}
 		}
 	}()
+	if err := watcher.Add(cfg.CertFilepath); err != nil {
+		return nil, fmt.Errorf("failed to setup watcher for cert file: %w", err)
+	}
+	if err = watcher.Add(cfg.KeyFilepath); err != nil {
+		return nil, fmt.Errorf("failed to setup watcher for key file: %w", err)
+	}
 
 	return &tls.Config{
 		MinVersion: tls.VersionTLS12,
