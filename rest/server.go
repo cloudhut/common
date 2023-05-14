@@ -36,6 +36,7 @@ func NewServer(cfg *Config, logger *zap.Logger, router *chi.Mux) (*Server, error
 			WriteTimeout: cfg.HTTPServerWriteTimeout,
 			IdleTimeout:  cfg.HTTPServerIdleTimeout,
 			Handler:      router,
+			ErrorLog:     zap.NewStdLog(logger.Named("http_server")),
 		},
 		Logger: logger,
 	}
@@ -76,19 +77,35 @@ func (s *Server) Start() error {
 	}()
 
 	// Serve HTTP server
-	listener, err := net.Listen("tcp", net.JoinHostPort(s.cfg.HTTPListenAddress, strconv.Itoa(s.cfg.HTTPListenPort)))
+	listenerPort := s.cfg.HTTPListenPort
+	if s.cfg.TLS.Enabled {
+		listenerPort = s.cfg.HTTPSListenPort
+	}
+	listener, err := net.Listen("tcp", net.JoinHostPort(s.cfg.HTTPListenAddress, strconv.Itoa(listenerPort)))
 	if err != nil {
 		return err
 	}
-	s.Logger.Info("Server listening on address", zap.String("address", listener.Addr().String()), zap.Int("port", s.cfg.HTTPListenPort))
+	s.Logger.Info("Server listening on address", zap.String("address", listener.Addr().String()), zap.Int("port", listenerPort))
 
-	err = s.Server.Serve(listener)
+	if s.cfg.TLS.Enabled {
+		rdSrv := newRedirectServer(s.cfg, s.Logger)
+		go func() {
+			err := rdSrv.Start()
+			if err != nil {
+				s.Logger.Error("failed to start HTTP to HTTPS redirect server", zap.Error(err))
+			}
+		}()
+
+		err = s.Server.ServeTLS(listener, "", "")
+	} else {
+		err = s.Server.Serve(listener)
+	}
 	if err != http.ErrServerClosed {
 		return err
 	}
 
 	wg.Wait()
-	s.Logger.Info("Stopped HTTP server")
+	s.Logger.Info("Stopped HTTP server", zap.String("address", listener.Addr().String()), zap.Int("port", listenerPort))
 
 	return nil
 }

@@ -17,6 +17,16 @@ type Config struct {
 	HTTPServerWriteTimeout time.Duration `yaml:"writeTimeout"`
 	HTTPServerIdleTimeout  time.Duration `yaml:"idleTimeout"`
 
+	// HTTPSListenPort and HTTPListenPort are separate so that we can listen
+	// on both and redirect users to the HTTPS url.
+	HTTPSListenPort int `yaml:"httpsListenPort"`
+	// AdvertisedHTTPSListenPort is the HTTPS port that will be used for
+	// redirecting the user in the browser. If your application is serving
+	// the TLS port on 8081 but some LoadBalancer between the user and your
+	// Go application remaps this to 443 you want to set this port to
+	// 443 as well. Otherwise, users will be redirected to your HTTPSListenPort.
+	AdvertisedHTTPSListenPort int `yaml:"advertisedHttpsListenPort"`
+
 	CompressionLevel int `yaml:"compressionLevel"`
 
 	BasePath                        string `yaml:"basePath"`
@@ -32,6 +42,9 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 
 	f.StringVar(&c.HTTPListenAddress, "server.http.listen-address", "", "HTTP server listen address")
 	f.IntVar(&c.HTTPListenPort, "server.http.listen-port", 8080, "HTTP server listen port")
+
+	f.IntVar(&c.HTTPSListenPort, "server.https.listen-port", 8081, "HTTPS server listen port")
+
 	// Get "PORT" environment variable because CloudRun tells us what Port to use
 	portEnv := os.Getenv("PORT")
 	if portEnv != "" {
@@ -63,6 +76,8 @@ func (c *Config) SetDefaults() {
 	c.HTTPServerIdleTimeout = 30 * time.Second
 	c.HTTPServerReadTimeout = 30 * time.Second
 	c.HTTPServerWriteTimeout = 30 * time.Second
+
+	c.HTTPSListenPort = 8081
 
 	c.CompressionLevel = 4
 
