@@ -22,6 +22,8 @@ type Config struct {
 	BasePath                        string `yaml:"basePath"`
 	SetBasePathFromXForwardedPrefix bool   `yaml:"setBasePathFromXForwardedPrefix"`
 	StripPrefix                     bool   `yaml:"stripPrefix"`
+
+	TLS TLSConfig `yaml:"tls"`
 }
 
 // RegisterFlags adds the flags required to config the server
@@ -49,6 +51,8 @@ func (c *Config) RegisterFlags(f *flag.FlagSet) {
 	f.StringVar(&c.BasePath, "server.base-path", "", "Sets the subpath (root prefix) under which Kowl is reachable. If you want to host Kowl under 'your.domain.com/kowl/' you'd set the base path to 'kowl/'. The default is an empty string which makes Kowl reachable under just 'domain.com/'. When using this setting (or letting the 'X-Forwarded-Prefix' header set it for you) remember to either leave 'strip-prefix' enabled, or use a proxy that can strip the base-path/prefix before it reaches Kowl.")
 	f.BoolVar(&c.SetBasePathFromXForwardedPrefix, "server.set-base-path-from-x-forwarded-prefix", true, "When set to true, Kowl will use the 'X-Forwarded-Prefix' header as the base path. (When enabled the 'base-path' setting won't be used)")
 	f.BoolVar(&c.StripPrefix, "server.strip-prefix", true, "If a base-path is set (either by the 'base-path' setting, or by the 'X-Forwarded-Prefix' header), they will be removed from the request url. You probably want to leave this enabled, unless you are using a proxy that can remove the prefix automatically (like Traefik's 'StripPrefix' option)")
+
+	c.TLS.RegisterFlagsWithPrefix(f, "server.tls.")
 }
 
 func (c *Config) SetDefaults() {
@@ -65,4 +69,21 @@ func (c *Config) SetDefaults() {
 	c.BasePath = ""
 	c.SetBasePathFromXForwardedPrefix = true
 	c.StripPrefix = true
+}
+
+// TLSConfig contains the configuration properties for the HTTP
+// TLS configuration. If enabled, the HTTP server will serve on
+// HTTPS and terminate TLS.
+type TLSConfig struct {
+	Enabled      bool   `yaml:"enabled"`
+	CertFilepath string `yaml:"certFilepath"`
+	KeyFilepath  string `yaml:"keyFilepath"`
+}
+
+// RegisterFlagsWithPrefix adds the flags required to config the server
+func (c *TLSConfig) RegisterFlagsWithPrefix(f *flag.FlagSet, prefix string) {
+	f.BoolVar(&c.Enabled, prefix+"enabled", false, "Whether to terminate TLS. Requires a key and cert filepath to be set.")
+	f.StringVar(&c.CertFilepath, prefix+"cert-filepath", "", "Filepath to TLS certificate.")
+	f.StringVar(&c.KeyFilepath, prefix+"key-filepath", "", "Filepath to TLS key.")
+
 }
