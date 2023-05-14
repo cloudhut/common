@@ -143,7 +143,7 @@ func buildServerTLSConfig(logger *zap.Logger, cfg TLSConfig) (*tls.Config, error
 					}
 				}
 
-				logger.Info("key or certificate file has changed. hot reloading the tls certificate")
+				logger.Info("hot reloading the TLS certificate")
 
 				newCert, err := tls.LoadX509KeyPair(cfg.CertFilepath, cfg.KeyFilepath)
 				if err != nil {
@@ -153,6 +153,8 @@ func buildServerTLSConfig(logger *zap.Logger, cfg TLSConfig) (*tls.Config, error
 				lock.Lock()
 				cert = newCert
 				lock.Unlock()
+
+				logger.Info("successfully hot reloaded the TLS certificate")
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
