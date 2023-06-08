@@ -12,8 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// TLSReloadNotifySignal is the reload signal.
+type TLSReloadNotifySignal struct {
+	old tls.Certificate
+	new tls.Certificate
+}
+
 // BuildWatchedTLSConfig builds TLS with integrated watched to reload certificate files when they are changed.
-func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string) (*tls.Config, error) {
+func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string, notify chan<- TLSReloadNotifySignal) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading TLS cert: %w", err)
@@ -70,9 +76,17 @@ func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string) (*tls.C
 					logger.Error("failed to load certificates", zap.Error(err))
 					continue
 				}
+
+				certUpdateSignal := TLSReloadNotifySignal{
+					old: cert,
+					new: newCert,
+				}
+
 				lock.Lock()
 				cert = newCert
 				lock.Unlock()
+
+				notify <- certUpdateSignal
 
 				logger.Info("successfully hot reloaded the TLS certificate")
 			case err, ok := <-watcher.Errors:

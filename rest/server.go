@@ -41,7 +41,7 @@ func NewServer(cfg *Config, logger *zap.Logger, router *chi.Mux) (*Server, error
 	}
 
 	if cfg.TLS.Enabled {
-		tlsCfg, err := tls.BuildWatchedTLSConfig(logger, cfg.TLS.CertFilepath, cfg.TLS.KeyFilepath)
+		tlsCfg, err := tls.BuildWatchedTLSConfig(logger, cfg.TLS.CertFilepath, cfg.TLS.KeyFilepath, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create TLS config: %w", err)
 		}
