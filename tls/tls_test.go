@@ -181,7 +181,7 @@ func TestBuildWatchedTLSConfig(t *testing.T) {
 			fmt.Fprintln(w, "Hello, client")
 		})
 
-		signalCh := make(chan TLSReloadNotifySignal, 10)
+		signalCh := make(chan *tls.Certificate, 10)
 
 		count := atomic.Int32{}
 		go func() {
