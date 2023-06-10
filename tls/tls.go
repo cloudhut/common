@@ -75,7 +75,9 @@ func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string, notify 
 				cert = newCert
 				lock.Unlock()
 
-				notify <- &newCert
+				if notify != nil {
+					notify <- &newCert
+				}
 
 				logger.Info("successfully hot reloaded the TLS certificate")
 			case err, ok := <-watcher.Errors:
