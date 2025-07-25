@@ -3,17 +3,17 @@ package tls
 import (
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
 	"github.com/fsnotify/fsnotify"
-	"go.uber.org/zap"
 )
 
 // BuildWatchedTLSConfig builds TLS with integrated watched to reload certificate files when they are changed.
-func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string, notify chan<- *tls.Certificate) (*tls.Config, error) {
+func BuildWatchedTLSConfig(logger *slog.Logger, certFile, keyFile string, notify chan<- *tls.Certificate) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading TLS cert: %w", err)
@@ -51,15 +51,15 @@ func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string, notify 
 					err = watcher.Add(certFile)
 					if err != nil {
 						logger.Error("failed to re-add file watcher",
-							zap.String("file_path", certFile),
-							zap.Error(err))
+							slog.String("file_path", certFile),
+							slog.Any("error", err))
 					}
 
 					err = watcher.Add(keyFile)
 					if err != nil {
 						logger.Warn("failed to re-add file watcher",
-							zap.String("file_path", keyFile),
-							zap.Error(err))
+							slog.String("file_path", keyFile),
+							slog.Any("error", err))
 					}
 				}
 
@@ -67,7 +67,7 @@ func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string, notify 
 
 				newCert, err := tls.LoadX509KeyPair(certFile, keyFile)
 				if err != nil {
-					logger.Error("failed to load certificates", zap.Error(err))
+					logger.Error("failed to load certificates", slog.Any("error", err))
 					continue
 				}
 
@@ -84,7 +84,7 @@ func BuildWatchedTLSConfig(logger *zap.Logger, certFile, keyFile string, notify 
 				if !ok {
 					return
 				}
-				logger.Error("tls certificate watcher error", zap.Error(err))
+				logger.Error("tls certificate watcher error", slog.Any("error", err))
 			case <-signalCh:
 				return
 			}

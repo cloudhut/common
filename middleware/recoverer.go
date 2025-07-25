@@ -3,14 +3,14 @@ package middleware
 import (
 	"fmt"
 	"github.com/cloudhut/common/rest"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"log/slog"
 	"net/http"
+	"runtime/debug"
 )
 
 // Recoverer middleware logs unhandled panics and tries to continue running the API
 type Recoverer struct {
-	Logger *zap.Logger
+	Logger *slog.Logger
 }
 
 // Wrap provides the actual middleware for recovering from panic
@@ -24,8 +24,8 @@ func (rec *Recoverer) Wrap(next http.Handler) http.Handler {
 					Status:   http.StatusInternalServerError,
 					Message:  "Internal Server Error",
 					IsSilent: false,
-					InternalLogs: []zapcore.Field{
-						zap.Stack("stack"),
+					InternalLogs: []slog.Attr{
+						slog.String("stack", string(debug.Stack())),
 					},
 				}
 				rest.SendRESTError(w, r, rec.Logger, restErr)

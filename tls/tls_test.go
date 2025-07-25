@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -16,12 +17,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"go.uber.org/zap"
 )
 
 func TestBuildWatchedTLSConfig(t *testing.T) {
-	log := zap.NewExample()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	t.Run("no update", func(t *testing.T) {
 		l, err := net.Listen("tcp", ":0")

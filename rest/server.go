@@ -2,7 +2,9 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -11,9 +13,9 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/cloudhut/common/tls"
 	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
+
+	"github.com/cloudhut/common/tls"
 )
 
 // Server struct to handle a common http routing server
@@ -22,11 +24,11 @@ type Server struct {
 
 	Router *chi.Mux
 	Server *http.Server
-	Logger *zap.Logger
+	Logger *slog.Logger
 }
 
 // NewServer create server instance
-func NewServer(cfg *Config, logger *zap.Logger, router *chi.Mux) (*Server, error) {
+func NewServer(cfg *Config, logger *slog.Logger, router *chi.Mux) (*Server, error) {
 	server := &Server{
 		cfg:    cfg,
 		Router: router,
@@ -35,7 +37,7 @@ func NewServer(cfg *Config, logger *zap.Logger, router *chi.Mux) (*Server, error
 			WriteTimeout: cfg.HTTPServerWriteTimeout,
 			IdleTimeout:  cfg.HTTPServerIdleTimeout,
 			Handler:      router,
-			ErrorLog:     zap.NewStdLog(logger.Named("http_server")),
+			ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		},
 		Logger: logger,
 	}
@@ -65,11 +67,11 @@ func (s *Server) Start() error {
 		ctx, cancel := context.WithTimeout(context.Background(), s.cfg.ServerGracefulShutdownTimeout)
 		defer cancel()
 
-		s.Logger.Info("Stopping HTTP server", zap.String("reason", "received signal"))
+		s.Logger.Info("Stopping HTTP server", slog.String("reason", "received signal"))
 		s.Server.SetKeepAlivesEnabled(false)
 		err := s.Server.Shutdown(ctx)
 		if err != nil {
-			s.Logger.Panic(err.Error())
+			s.Logger.Error("Failed to shutdown server gracefully", slog.Any("error", err))
 		}
 
 		wg.Done()
@@ -84,14 +86,14 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
-	s.Logger.Info("Server listening on address", zap.String("address", listener.Addr().String()), zap.Int("port", listenerPort))
+	s.Logger.Info("Server listening on address", slog.String("address", listener.Addr().String()), slog.Int("port", listenerPort))
 
 	if s.cfg.TLS.Enabled {
 		rdSrv := newRedirectServer(s.cfg, s.Logger)
 		go func() {
 			err := rdSrv.Start()
 			if err != nil {
-				s.Logger.Error("failed to start HTTP to HTTPS redirect server", zap.Error(err))
+				s.Logger.Error("failed to start HTTP to HTTPS redirect server", slog.Any("error", err))
 			}
 		}()
 
@@ -99,12 +101,12 @@ func (s *Server) Start() error {
 	} else {
 		err = s.Server.Serve(listener)
 	}
-	if err != http.ErrServerClosed {
+	if !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 
 	wg.Wait()
-	s.Logger.Info("Stopped HTTP server", zap.String("address", listener.Addr().String()), zap.Int("port", listenerPort))
+	s.Logger.Info("Stopped HTTP server", slog.String("address", listener.Addr().String()), slog.Int("port", listenerPort))
 
 	return nil
 }

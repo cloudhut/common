@@ -1,21 +1,21 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"go.uber.org/zap"
 )
 
 // AccessLog implements the middleware interface
 type AccessLog struct {
-	logger *zap.Logger
+	logger *slog.Logger
 }
 
 // NewAccessLog creates a new middleware which prints access logs
-func NewAccessLog(logger *zap.Logger, extraHeader string) *AccessLog {
+func NewAccessLog(logger *slog.Logger, extraHeader string) *AccessLog {
 	return &AccessLog{logger}
 }
 
@@ -35,18 +35,18 @@ func (a *AccessLog) Wrap(next http.Handler) http.Handler {
 		duration := time.Since(start)
 		durationMs := duration.Nanoseconds() / (1000 * 1000)
 
-		a.logger.Info("",
-			zap.String("log_type", "access"),
-			zap.String("remote_address", r.RemoteAddr),
-			zap.Int64("response_time", durationMs),
-			zap.String("protocol", r.Proto),
-			zap.String("request_method", r.Method),
-			zap.String("query_string", r.URL.RawQuery),
-			zap.String("status", strconv.Itoa(ww.Status())),
-			zap.String("uri", r.URL.Path),
-			zap.String("server_name", r.URL.Host),
-			zap.Int64("bytes_received", r.ContentLength),
-			zap.Int("bytes_sent", ww.BytesWritten()),
-			zap.String("remote_client_id", r.Header.Get("remoteClientId")))
+		a.logger.InfoContext(r.Context(), "http request",
+			slog.String("log_type", "access"),
+			slog.String("remote_address", r.RemoteAddr),
+			slog.Int64("response_time", durationMs),
+			slog.String("protocol", r.Proto),
+			slog.String("request_method", r.Method),
+			slog.String("query_string", r.URL.RawQuery),
+			slog.String("status", strconv.Itoa(ww.Status())),
+			slog.String("uri", r.URL.Path),
+			slog.String("server_name", r.URL.Host),
+			slog.Int64("bytes_received", r.ContentLength),
+			slog.Int("bytes_sent", ww.BytesWritten()),
+			slog.String("remote_client_id", r.Header.Get("remoteClientId")))
 	})
 }
